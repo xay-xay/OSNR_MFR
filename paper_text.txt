@@ -1,0 +1,782 @@
+===== PAGE 1 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14686
+Multi-feature fusion for joint modulation format
+recognition and OSNR monitoring based on a
+lightweight adaptive attention network
+ZIHAN ZHANG ,1,2,3 QI ZHANG ,1,2,3,* XIANGJUN XIN ,4 FENG
+TIAN ,1,2,3 QIHAN ZHAO ,1,2,3 ZHIQI HUANG ,1,2,3 HAIPENG YAO,1,5
+RAN GAO,4 FU WANG ,1,2,3
+ SITONG ZHOU ,1,2,3 YONGJUN
+WANG ,1,2,3 QINGHUA TIAN ,1,2,3
+ AND LEIJING YANG 1,2,3
+1The School of Electronic Engineering, Beijing University of Posts and Telecommunications (BUPT),
+Beijing 100876, China
+2The State Key Laboratory of Information Photonics and Optical Communications, Beijing University of
+Posts and Telecommunications, Beijing 100876, China
+3The Beijing Key Laboratory of Space-Ground Interconnection and Convergence, Beijing University of
+Posts and Telecommunications, Beijing 100876, China
+4The School of Information and Electronics, Beijing Institute of Technology (BIT), Beijing 100081, China
+5The State Key Laboratory of Networking and Switching Technology, BUPT, Beijing 100876, China
+*zhangqi@bupt.edu.cn
+Abstract: To address the challenge of achieving both high accuracy and low computational
+complexityinjointmodulationformatrecognition(MFR)andopticalsignal-to-noiseratio(OSNR)
+monitoring, a multi-feature fusion method based on a lightweight adaptive attention network
+is proposed. A lightweight feature extraction scheme is first applied to the constant modulus
+algorithm (CMA)-equalized signal to obtain multiple amplitude statistical and entropy features
+for efficient signal representation. These features are then input into the proposed lightweight
+adaptive multi-task squeeze-and-excitation deep neural network (LA-MT-SEDNN) integrated
+with a hyperparameter tuning strategy based on Bayesian optimization (BO), enabling accurate
+and low-complexity joint estimation. Experimental results in wavelength-division-multiplexed
+(WDM) long-haul systems demonstrate strong accuracy and robustness under different OSNR
+and channel conditions. Compared with a conventional multi-task neural network, the proposed
+method achieves 100% MFR accuracy at minimum OSNR values reduced by 4 dB, 5 dB, 5 dB,
+and2dBfor4QAM,8QAM,16QAM,and64QAM,respectively. ForOSNRmonitoring,itattains
+0.065 dB MSE, 0.169 dB MAE, and 0.233 dB RMSE, with MAE and RMSE reduced by 63.9%
+and 65.7% compared with MTL-CNN and adaptive MTL-DNN. Moreover, the multiplication
+time complexity is reduced by approximately 98.9% and 95.2%, demonstrating significant
+performance improvements with substantially lower computational complexity.
+© 2026 Optica Publishing Group under the terms of the Optica Open Access Publishing Agreement
+1. Introduction
+The rapid expansion of data-intensive applications, including high-definition video, cloud com-
+puting, and intelligent devices, has imposed increasingly stringent demands on network capacity
+and flexibility, driving the evolution of optical networks toward dynamic and reconfigurable
+architectures such as Elastic Optical Networks (EONs) [1–4]. By enabling fine-grained and
+adaptive spectrum allocation, EONs significantly improve spectral efficiency and support flexible
+adjustment of transmission parameters according to traffic conditions [5], establishing them as a
+key foundation for next-generation intelligent optical networks [6,7]. However, ensuring stable
+operation in such dynamic environments necessitates real-time monitoring of critical physical
+layerparameters, particularlymodulationformatandOSNR.JointestimationofMFRandOSNR
+#589670 https://doi.org/10.1364/OE.589670
+Journal © 2026 Received 7 Jan 2026; revised 5 Mar 2026; accepted 24 Mar 2026; published 10 Apr 2026
+
+===== PAGE 2 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14687
+is essential for reliable network scheduling and adaptive digital signal processing (DSP), yet
+practical deployment faces two major challenges: OSNR directly affects signal equalization
+quality and bit error rate performance [8], while inaccurate MFR may lead to improper DSP
+configuration and subsequent signal recovery errors [9,10].
+To address these challenges, coherent optical receivers should support simultaneous MFR
+and OSNR estimation. Accurate OSNR monitoring provides physical-layer quality information
+for optimized resource allocation, while real-time MFR enables adaptive DSP configuration,
+reducing reliance on traditional handshake mechanisms and enhancing system autonomy [11]. In
+recentyears,feature-basedMFRmethodshaveattractedattentionduetotheirlowcomplexityand
+limited prior requirements, including approaches based on constellation analysis, histogram and
+statistical features [12–14], as well as stokes space representations [15]. For OSNR monitoring,
+existing techniques include statistical methods [16,17], Stokes space distribution-based schemes
+[18,19], data-aided approaches [20], and amplitude distribution-based methods [21].
+To enable simultaneous multi-parameter monitoring in EONs, various joint MFR and OSNR
+schemes based on multi-task learning have been proposed. For example, MTL-DNN methods
+improve monitoring performance through manually designed or adaptive task weights [22,23].
+Other approaches extract Stokes vector distribution features to enhance accuracy [24], or adopt
+image-based strategies such as CNNs with amplitude histograms and Radon transform-assisted
+multi-task learning [25,26]. However, these methods often face limitations in accuracy or model
+complexityundercomplexlinkconditions. Cascadedneuralnetworkarchitectureshavealsobeen
+explored, but their OSNR estimation usually relies on prior knowledge of the modulation format.
+Therefore, developing a joint monitoring scheme with both high accuracy and low complexity
+remains essential for practical EON applications.
+To overcome the difficulty of balancing high accuracy and low computational complexity in
+joint MFR and OSNR monitoring, a multi-feature fusion for joint MFR and OSNR monitoring
+based on LA-MT-SEDNN method is proposed. Multiple amplitude statistical features, including
+the amplitude histogram (AH), amplitude mean square distance, amplitude dispersion standard
+deviation and instantaneous velocity standard deviation together with entropy features are
+extracted to achieve an efficient and compact representation of the signal characteristics. These
+features are fed into the LA-MT-SEDNN for joint MFR and OSNR monitoring, where a channel
+attentionmechanismadaptivelycapturesinter-featuredependenciesandhighlightsdiscriminative
+information. Furthermore, an adaptive hyperparameter tuning strategy based on BO is integrated
+into the network, this method enabling automated optimization of the model’s convergence
+speed and generalization capability without manual intervention. Simulation and experimental
+results verify the effectiveness of the proposed method. For 28 GBaud polarization division
+multiplexing (PDM)-4QAM, 8QAM, 16QAM, 32QAM, and 64QAM signals, 100% MFR
+accuracy is maintained across the entire OSNR range, while OSNR estimation achieves MSE,
+MAE, and RMSE values as low as 0.088 dB, 0.226 dB, and 0.296 dB, respectively. The method
+also demonstrates strong robustness under residual CD and nonlinear impairments. In WDM
+long-haul transmission experiments, 100% MFR accuracy is achieved at minimum OSNR values
+reduced by 4 dB, 5 dB, 5 dB, and 2 dB for 4QAM, 8QAM, 16QAM, and 64QAM, respectively.
+Meanwhile, the OSNR monitoring MSE, MAE, and RMSE are reduced to 0.065 dB, 0.169 dB,
+and0.233dB,respectively,withMAEandRMSEdecreasedby63.9%and65.7%comparedwith
+MTL-CNN and adaptive MTL-DNN. Moreover, the multiplication time complexity is reduced
+by approximately 98.9% and 95.2%, demonstrating that it achieves significant performance
+improvement while maintaining exceptional computational efficiency.
+2. Principle
+The schematic diagram of the proposed scheme is shown in Fig. 1. At the receiver, the
+optical signal is detected by a coherent receiver and processed by DSP modules, including IQ
+===== PAGE 3 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14688
+imbalance compensation, CD compensation, clock recovery, and CMA, to mitigate transmission
+impairments. These operations are modulation-format independent. The equalized signal is
+then delivered to the joint MFR and OSNR estimation module. In this module, a lightweight
+feature extraction scheme combining amplitude statistical and entropy features is applied to the
+CMA-equalized signal. Amplitude statistical features, including AH, amplitude mean square
+distance, amplitude dispersion standard deviation, and instantaneous velocity standard deviation,
+are extracted together with entropy features to provide a compact and informative representation.
+The resulting features are fed into the proposed LA-MT-SEDNN for joint MFR and OSNR
+monitoring. The LA-MT-SEDNN consists of a shared feature layer, an SE attention module, and
+task-specific layers. The shared layer learns common representations for both tasks, while the SE
+module enhances discriminative channels and suppresses redundant information by modeling
+inter-channel dependencies. The task-specific layers are optimized separately for MFR and
+OSNR, enabling parallel prediction. In addition, an adaptive hyperparameter tuning strategy is
+incorporated to improve convergence efficiency and generalization performance without manual
+adjustment.
+Fig. 1. The schematic diagram of the proposed scheme.
+2.1. Lightweight feature extraction scheme combining amplitude statistical features
+and entropy features
+Figure 2 presents the constellation diagrams of 4QAM, 8QAM, 16QAM, 32QAM, and 64QAM
+afterCMAequalizationatanOSNRof25dB.Withincreasingmodulationorder,theconstellation
+becomesmorecomplex,andthenumberofcirculardistributionsincreasesfrom1to5,indicating
+distinct amplitude characteristics. To better capture this information, the two-dimensional
+constellation data are converted into a one-dimensional AH.
+As illustrated in Fig. 3, AHs can effectively distinguish modulation formats and OSNR
+conditions. However, conventional AH-based methods rely on a large number of bins to achieve
+sufficient resolution, leading to high-dimensional features and increased training complexity.
+Simply reducing the bin number would compromise discriminative capability. To address
+this issue, we redesign the feature space from a more informative and physically meaningful
+perspective. A one-dimensional AH with 40 bins is adopted to preserve essential amplitude
+distribution information with reduced dimensionality. In addition, three amplitude statistical
+===== PAGE 4 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14689
+Fig. 2. Constellation diagrams at X-polarization with an OSNR of 25 dB after CMA.
+features, namely amplitude mean square distance, amplitude dispersion standard deviation, and
+instantaneous velocity standard deviation, together with two entropy features, energy entropy
+and norm entropy, are introduced to characterize geometric distribution, dynamic behavior, and
+signal uncertainty. By jointly modeling these complementary attributes in a compact statistical
+space,theproposedstrategypreservesstrongdiscriminativecapabilityforMFRandOSNRwhile
+significantly reducing feature dimensionality, thereby lowering DSP overhead and improving
+real-time deployment feasibility. The feature definitions are given as follows.
+The amplitude mean square distanceDms reflects the dispersion degree of the signal around
+the central value by calculating the square of the absolute deviation between each signal sample
+and the amplitude mean value point.Dms mathematical expression is
+Dms = 1
+N
+N∑︂
+i=1
+|xi−µ|2. (1)
+Here, xi represents the received signal,µ is the mean of the signal, andN is the number of
+samples.
+The amplitude dispersion standard deviationσspread is used to measure the volatility of the
+signal amplitude values relative to their mean value.σspread definition is as follows.
+σspread =
+⌜⃓⎷
+1
+N−1
+N∑︂
+i=1
+(|xi|−µ)2. (2)
+Theinstantaneousvelocitystandarddeviation σvelisusedtoquantifytheamplitudefluctuations
+of the signal over time. This feature is highly sensitive to OSNR variations and can effectively
+===== PAGE 5 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14690
+Fig. 3. Amplitude histograms (AHs) of constellation diagrams.
+reflect the level of noise perturbation in the signal. The instantaneous velocityvi is defined as the
+difference in amplitude between consecutive samples, and the expression ofσvel is
+vi =|xi+1− xi|, i = 1,2, ... , N−1, (3)
+¯v = 1
+N−1
+N−1∑︂
+i=1
+vi, (4)
+σvel =
+⌜⃓⎷
+1
+N−2
+N−1∑︂
+i=1
+(vi− ¯v)2. (5)
+To accurately characterize the energy distribution of the signal, the proposed method incorpo-
+rates energy entropy and norm entropy, which reflect the uniformity and concentration of the
+energy distribution, respectively. The definition of energyEi is as follows.
+Ei = |xi|2
+∑︁N
+i |xi|2, (6)
+where xi represents the received signal.
+Energy entropy Hlog quantifies the uniformity of the signal’s energy distribution and is
+expressed as
+Hlog =−
+N∑︂
+i=1
+Ei log(Ei +ε), (7)
+whereε is a small positive constant used to avoid logarithmic singularities.
+===== PAGE 6 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14691
+Normentropy Hnorm characterizestheconcentrationoftheenergydistributionandiscommonly
+defined using a p-norm. In this work, p=2 is selected. The mathematical expression ofHnorm is
+as follows.
+Hnorm =
+N∑︂
+i=1
+Ep
+i. (8)
+The higher value of norm entropy indicates a more concentrated energy distribution, whereas
+the lower value corresponds to a more uniform distribution.
+To evaluate the physical discriminability of the proposed statistical and entropy features,
+Fig. 4 presents boxplots under different modulation formats and OSNR conditions. Distinct
+modulation formats exhibit clearly separable amplitude statistics and entropy distributions, even
+at comparable OSNR levels. For example, when comparing 4QAM at 9 dB and 8QAM at 12 dB,
+the boxplot ofσspread exhibits a noticeable upward shift. In addition, when comparing 4QAM at
+14 dB and 16QAM at 19 dB, the values ofHnorm increase significantly, with the corresponding
+boxplots shifting upward and showing almost no overlap. A similar distinction can also be
+observed between 8QAM at 12 dB and 64QAM at 26 dB. In general, as the modulation order
+increases, both amplitude range and entropy shift upward with limited overlap, demonstrating
+strong discriminative capability for MFR.
+For OSNR monitoring, both amplitude and entropy features exhibit systematic variations with
+OSNR for a fixed modulation format. For example, as the OSNR of 4QAM increases from 9 dB
+to14dBandthatof64QAMfrom21dBto26dB,theboxplotof σspread showsanoticeableshift,
+while the values ofHlog increase significantly, resulting in a higher overall box distribution. This
+behavior reflects the sensitivity of these features to noise conditions. Specifically, higher OSNR
+mitigates noise-induced constellation compression and distortion, enabling clearer resolution
+of intrinsic amplitude levels and increased signal complexity. This consistent trend supports
+continuous and reliable OSNR estimation.
+The above results demonstrate that physical impairments, such as noise accumulation and
+constellationcompression,inducesystematicandquantifiablevariationsinamplitudestatisticsand
+entropy descriptorsacross different modulation formats and OSNRconditions. By leveraging the
+proposedmulti-featurerepresentationandattentionmechanism,thenetworkadaptivelyintegrates
+these structured variations, establishing a clear link between physical signal characteristics and
+decision outcomes for accurate MFR and OSNR estimation.
+2.2. LA-MT -SEDNN
+Multi-Task Learning (MTL) is an inductive transfer strategy that improves generalization by
+sharing feature representations across related tasks [27]. However, many existing MTL networks
+methods enhance accuracy by increasing network depth and parameter scale, resulting in higher
+computational complexity and limited deployment feasibility. To improve feature utilization
+efficiency within a lightweight architecture, a lightweight attention-assisted multi-task network,
+termedLA-MT-SEDNN,isproposedforcollaborativeMFRandOSNRmonitoring,asillustrated
+in Fig. 5.
+The model first takes a one-dimensional vector of 45 normalized features as input and extracts
+low-level representations through a shared layer. This layer contains 64 fully connected neurons
+with ELU activation, and Batch Normalization (BN) is applied to accelerate convergence and
+enhance training stability.
+After the shared layer, an SE module is introduced before the task-specific branches to
+enhance feature selectivity by adaptively recalibrating channel-wise representations. Taking the
+64-dimensional shared features as input, the module models inter-channel dependencies through
+squeeze and excitation operations, strengthening task-relevant information while suppressing
+redundancy. In the squeeze stage, a fully connected layer compresses the feature dimension
+===== PAGE 7 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14692
+Fig. 4. Statistical and entropy feature distributions under different modulation formats and
+OSNR conditions: (a) 4QAM (OSNR= 9 dB), (b) 4QAM (OSNR= 14 dB), (c) 8QAM
+(OSNR =12 dB), (d) 8QAM (OSNR=17 dB), (e) 16QAM (OSNR=15 dB), (f) 16QAM
+(OSNR = 19 dB), (g) 32QAM (OSNR= 18 dB), (h) 32QAM (OSNR= 23 dB), (i) 64QAM
+(OSNR =21 dB), (j) 64QAM (OSNR=26 dB).
+from 64 to 32, capturing global channel statistics with reduced parameter complexity. The
+low-dimensional vectorzis as follows.
+z = ReLU(W1h + b1), (9)
+where h represents the input feature vector,W1∈ R
+h
+r×h = R32×64 represents the compression
+weight matrix of the linear layer,b1∈ R
+h
+r is the bias vector,ReLU(·) is the linear unit activation
+function, which is used to introduce nonlinear mapping to enhance the expression ability of the
+features.
+===== PAGE 8 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14693
+Fig. 5. The schematic diagram of the LA-MT-SEDNN.
+Intheexcitationstage,themodulerestoresthelow-dimensionalvector ztotheoriginalchannel
+dimension through another linear layer and generates the attention weightssfor each channel.
+s =σ(W2z + b2), (10)
+where W2∈ Rh× h
+r = R64×32 is the expansion weight matrix of the linear layer,b2∈ R
+h
+r is the bias
+vector,and σ(·)representstheSigmoidactivationfunction. Theoutputvector s =[s1, s2,... , s64]
+haseachelement’svaluerangingfrom(0,1),indicatingtheattentionweightsofthecorresponding
+channels.
+Based on the two stages mentioned above, the overall calculation process of the SE module
+can be expressed as
+SE(h) =σ(W2ReLU(W1h + b1) + b2). (11)
+Finally, the module multiplies the generated weight vectors with the input features channel by
+channel to achieve adaptive feature recalibration, the recalibrated featurehSE can be expressed as
+hSE = s⊙ h, (12)
+where⊙ denotes the channel-wise Hadamard product. The hSE is then forwarded to the
+task-specific layers, serving as an input for subsequent MFR and OSNR estimation.
+In the task-specific stage, the network is divided into two branches corresponding to MFR and
+OSNR estimation. Each branch consists of a fully connected layer with 32 neurons, employing
+theELUactivationfunctionandBNtoenhancethestabilityoffeaturerepresentation. Inaddition,
+a dropout mechanism is incorporated into the MFR branch to reduce overfitting and improve
+generalization performance. In the output layer, the MFR branch contains five output neurons
+corresponding to five modulation format classes, while the OSNR estimation branch includes a
+single output neuron. These two tasks adopt different loss functions for gradient computation to
+optimize the respective task outputs more effectively. The MFR task employs the categorical
+cross-entropy (CCE) loss function [9], defined as
+CCE =−
+m∑︂
+i=1
+yi· log ˆyi, (13)
+===== PAGE 9 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14694
+where m denotes the number of classes,yi is the target output, andˆy represents the actual output
+of the fully connected layer.
+For the OSNR estimation task, the MSE loss function is adopted [9], which is expressed as
+MSE = 1
+d
+d∑︂
+i=1
+(yi− ˆyi)2, (14)
+where d denotes the dimensionality of the output layer.
+Accordingly, the final loss function for evaluating the convergence of the LA-MT-SEDNN
+during training is defined as
+Lossall =λ1LMFR +λ2LOSNR, (15)
+where the parameterλ is introduced to balance the relative importance of each task in the
+LA-MT-SEDNN model, thereby enhancing the overall performance. In this work, fixed weights
+are adopted withλ1 = 0.8 andλ2 = 1.5. Assigning a relatively larger weight to the OSNR
+regressiontaskwasfoundtoenhanceestimationprecisionwhilemaintaininghighMFRaccuracy,
+leading to a favorable trade-off between the two tasks. Model training is performed using the
+adaptive gradient moment estimation (Adam) algorithm to minimize the output errors [28].
+To further enhance the training stability and adaptability of the proposed model, an adaptive
+hyperparameter tuning strategy based on BO is introduced using the Optuna framework. The
+learning rate is sampled from a log-uniform distribution within the range (5e-4, 1e-2), while
+the dropout rate, applied only to the MFR branch to alleviate overfitting, is sampled from a
+uniformdistributionwithin(0.1, 0.4). Atotalof30trialsareconducted, andthehyperparameters
+are progressively refined according to validation performance. This strategy enables automatic
+optimization of convergence speed and generalization without manual intervention.
+In summary, the proposed LA-MT-SEDNN model integrates channel attention enhancement
+and adaptive hyperparameter tuning to enhance feature discrimination and generalization while
+accelerating convergence, enabling accurate and efficient joint monitoring of MFR and OSNR in
+optical networks.
+3. Simulation results and discussions
+A 28 GBaud PDM-QAM simulation system is established using VPI Transmission Maker to
+validate the effectiveness of the proposed multi-feature fusion for MFR and OSNR monitoring
+based on LA-MT-SEDNN. The OSNR ranges are configured as 9∼20 dB for 4QAM, 10∼22 dB
+for 8QAM, 15∼27 dB for 16QAM, 18∼30 dB for 32QAM, and 18∼30 dB for 64QAM with an
+OSNR increment of 1 dB. For each OSNR value of each modulation format, 100 sets of data
+samples are generated, with each sample containing a one-dimensional vector feature composed
+of 16,384 symbols. Ultimately, 1,200 groups of samples were obtained for 4QAM, and 1,300
+groups each for 8QAM, 16QAM, 32QAM, and 64QAM. The dataset is randomly divided into
+70% for training, 20% for testing, and 10% for validation. The number of training epochs is set
+to 300, and an early stopping strategy is employed during the training process. Specifically, early
+stopping is triggered based on the validation loss of the OSNR estimation task. If the validation
+loss does not improve for 200 consecutive epochs, the training process is terminated early.
+Figure 6 illustrates the OSNR monitoring results for 4QAM, 8QAM, 16QAM, 32QAM, and
+64QAM in a back-to-back (BTB) transmission link. The recognition accuracy (RA) of the five
+modulation formats remain at 100% throughout the entire OSNR range. In addition, the OSNR
+monitoring average MAEs for 4QAM, 8QAM, 16QAM, 32QAM, and 64QAM are as low as
+0.157 dB, 0.188 dB, 0.194 dB, 0.271 dB, and 0.313 dB, respectively, demonstrating excellent
+OSNRmonitoringperformance. Overall,theproposedmethoddemonstratesaccuratemodulation
+recognition and OSNR monitoring.
+===== PAGE 10 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14695
+Fig. 6. OSNR monitoring MAE in BTB transmission link for (a) 4QAM (b) 8QAM (c)
+16QAM (d) 32QAM (e) 64QAM.
+Figure 7 shows the MFR accuracy and OSNR monitoring MAE versus epoch under fixed
+learning rates of 5e-4, 1e-3, 1e-2, and 5e-2, as well as the adaptive strategy based on BO. With
+fixedlearningrates,100%MFRaccuracyisachievedat200,120,80,and100epochs,respectively.
+In contrast, the adaptive strategy reaches 100% accuracy within 60 epochs, demonstrating faster
+convergence. For OSNR monitoring, at epoch 300 the MAE under fixed learning rates of 5e-4,
+1e-3, 1e-2, and 5e-2 is 4.3 dB, 1.26 dB, 0.23 dB, and 0.27 dB, respectively. At epoch 600, the
+MAEfurtherdecreasesto1.22dB,0.38dB,0.21dB,and0.23dB.Theadaptivestrategyachieves
+MAE values of 0.24 dB and 0.22 dB at epochs 300 and 600, respectively, comparable to the
+optimal fixed learning rate of 1e-2.Overall, the proposed LA-MT-SEDNN achieves the fastest
+convergence for MFR while maintaining competitive OSNR monitoring accuracy. The adaptive
+learning rate strategy enhances robustness and generalization without manual tuning, reducing
+training sensitivity and improving practicality for optical network applications.
+To validate the proposed method under practical transmission conditions, an optical fiber link
+simulation was conducted. The link consists of an 80 km G.652 SSMF and an EDFA with
+16 dB gain. The fiber attenuation, dispersion, and nonlinear refractive index coefficient of the
+SSMF were set to 0.2 dB/km, 17 ps/nm/km, and 26×10−21m2/W, respectively. Considering
+dynamic channel reconfiguration in elastic optical networks, where transmission parameters
+===== PAGE 11 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14696
+Fig. 7. The trend of MFR accuracy and OSNR monitoring MAE as a function of epoch
+under different fixed learning rates and the adaptive learning rate strategy (a) RA (b) MAE.
+vary over time, it is necessary to evaluate the robustness of the proposed method under different
+parameter settings. To investigate the impact of transmission distance, fiber lengths of 0 km, 80
+km, 160 km, 240 km, and 320 km are considered. As the fiber length increases, residual CD
+and nonlinear effects become more significant. As shown in Fig. 8, the recognition accuracy of
+all five modulation formats remains 100%, while the OSNR monitoring MAE shows a gradual
+increase. The maximum MAE values for 4QAM, 8QAM, 16QAM, 32QAM, and 64QAM are
+0.18 dB, 0.204 dB, 0.263 dB, 0.386 dB, and 0.459 dB, respectively. These results demonstrate
+that the proposed method maintains high MFR accuracy and reliable OSNR estimation under
+increasing transmission impairments, confirming its robustness in practical link conditions.
+Fig. 8. The RA and MAE with fiber lengths.
+To evaluate cross-distance generalization, the model was trained at 0 km and tested up to
+320 km. As shown in Table 1, MFR accuracy decreases slightly from 100% to 98%, while
+OSNR MAE rises from 0.169 dB to 0.235 dB. The slight performance degradation indicates
+that the proposed features and network remain robust under varying transmission distances,
+demonstrating reliable MFR and OSNR estimation even under unseen propagation conditions.
+To further evaluate the robustness of the proposed method, we examined the impact of
+polarization mode dispersion (PMD) and laser phase noise by varying differential group delay
+(DGD) and laser linewidth, respectively. Figure 9 shows the OSNR monitoring MAE for five
+modulation formats under different DGD values and laser linewidths. As shown in Fig. 9(a),
+withinaDGDrangeof0-10ps,theMAEvaluesforallfivemodulationformatsremainbelow0.45
+dB, with the highest-order 64QAM format exhibiting a maximum MAE of 0.427 dB. Similarly,
+Fig. 9(b) demonstrates that for laser linewidths between 50 KHz and 250 KHz, the MAE for all
+modulation formats stays within 0.5 dB, with a maximum of 0.485 dB across all formats. These
+===== PAGE 12 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14697
+Table 1. Cross-distance Generalization Performance (Training at 0 km)
+Training Distance Testing Distance MFR Accuracy (%) OSNR MAE (dB)
+0 km 0 km 100.0 0.169
+0 km 80 km 100.0 0.182
+0 km 160 km 99.2 0.198
+0 km 240 km 98.5 0.215
+0 km 320 km 98.0 0.235
+results indicate that the proposed method maintains strong robustness against variations in PMD
+and laser phase noise.
+Fig. 9. Tolerance to other impairments. (a) DGD (b) Laser linewidth.
+To further evaluate the impact of fiber nonlinearities, long-haul simulations were performed
+over a 400 km link with launch powers ranging from -2 dBm to 6 dBm in 2 dBm steps. EVM
+was used to characterize signal distortion. As shown in Fig. 10, when the launch power exceeds
+0 dBm, nonlinear effects become dominant, causing a slight degradation in OSNR monitoring
+accuracy, while the MAE remains at a low level. The maximum OSNR monitoring MAE for
+4QAM, 8QAM, 16QAM, 32QAM, and 64QAM signals is 0.182 dB, 0.212 dB, 0.27 dB, 0.37
+dB, and 0.471 dB, respectively. Meanwhile, all modulation formats maintain 100% recognition
+accuracy even at high launch powers. These results demonstrate that the proposed joint MFR and
+OSNR monitoring scheme exhibits strong robustness against fiber nonlinearities and is suitable
+for long-haul optical transmission systems.
+===== PAGE 13 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14698
+Fig. 10. The MAE of OSNR monitoring and the EVM of signals with different launch
+powers: (a) 4QAM (b) 8QAM (c) 16QAM (d) 32QAM (e) 64QAM.
+4. Experiment setups and results and discussions
+Figure11illustratesthearchitectureofthecoherentWDMopticaltransmissionsystem,including
+the transmitter configuration and the receiver-side digital signal processing (DSP). At the
+transmitter, quadrature amplitude modulation (QAM) signals are generated through a DSP
+chain comprising pseudo-random binary sequence (PRBS) generation, QAM mapping, and
+up-sampling. The electrical signals are output by an arbitrary waveform generator (AWG),
+amplified by an electrical amplifier (EA), and used to modulate two orthogonally polarized
+optical carriers emitted from a laser diode (LD). The optical carrier is split by a polarization
+beam splitter (PBS), independently modulated by in-phase/quadrature (I/Q) modulators, and
+recombined by a polarization beam combiner (PBC) to form a single transmission channel.
+Nine wavelength channels corresponding to International Telecommunication Union Telecom-
+munication Standardization Sector (ITU-T) channels C37 to C29, centered at 1548.518 nm,
+1549.320 nm, 1550.120 nm, 1550.918 nm, 1551.721 nm, 1552.524 nm, 1553.329 nm, 1554.134
+nm, and 1554.940 nm, are multiplexed by a wavelength division multiplexer (WDM Mux)
+and amplified by an erbium-doped fiber amplifier (EDFA) before transmission over three 80
+km spans of standard single-mode fiber (SSMF), with EDFAs deployed between spans. The
+optical fiber parameters include an attenuation coefficient of 0.2 dB/km, a CD coefficient of 17
+ps/nm·km, and a nonlinear coefficient of 1.3km−1·W−1. At the receiver, the target channel is
+===== PAGE 14 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14699
+Fig. 11. The architecture of the coherent WDM optical transmission system.
+selected using a tunable optical band-pass filter (OBF), and amplified spontaneous emission
+(ASE) noise is injected through a 2× 2 optical coupler for performance evaluation. After
+coherent detection using a local oscillator (LO) laser, the signal is digitized and processed
+by a modulation-format-independent DSP chain including resampling, low-pass filtering, I/Q
+imbalance, CD compensation, timing recovery, and constant modulus algorithm (CMA) equal-
+ization. The proposed lightweight adaptive attention network performs joint MFR and OSNR
+estimation, andtheidentifiedmodulationformatassistscarrierphaserecovery(CPR).AfterCPR,
+QAM demodulation is carried out. Real-time monitoring of the optical spectrum and temporal
+waveform is conducted using an optical spectrum analyzer (OSA) and an oscilloscope to ensure
+continuous evaluation of signal quality and system performance [29].
+Figure 12 illustrates the recognition accuracy and OSNR monitoring performance for 4QAM,
+8QAM, 16QAM, 32QAM, and 64QAM signals in the long-haul WDM transmission system.
+In the experimental setup, 8,000 symbols were used for each modulation format, and each
+modulation format was tested within a limited OSNR range: 3∼8 dB for 4QAM, 8∼15 dB for
+8QAM,10∼17dBfor16QAM,12 ∼22dBfor32QAM,and14 ∼25dBfor64QAM.Theproposed
+methodachieved100%recognitionaccuracyatOSNRvaluesof5dB,8dB,10dB,14dB,and16
+dB for the five modulation formats, respectively. Moreover, the OSNR estimation demonstrated
+high precision even under challenging transmission conditions, with average mean MAEs of
+0.127 dB, 0.142 dB, 0.198 dB, 0.265 dB, and 0.284 dB for 4QAM, 8QAM, 16QAM, 32QAM,
+and 64QAM, respectively. Since the OSNR ranges used in the experiments were narrower than
+those in simulations, the experimental results show slightly better performance compared to the
+simulated outcomes.
+Table 2 presents recognition accuracy with the number of channel counts under fixed OSNR
+conditions. The corresponding OSNR values for the five modulation formats are 10 dB, 12 dB,
+15dB,18dB,and22dB,respectively. Asthenumberofwavelengthchannelsincreases,thecross-
+phase modulation (XPM) effect becomes more pronounced. Nevertheless, the proposed method
+consistently maintains a 100% recognition accuracy across all channel counts, demonstrating its
+strong robustness and superior performance.
+To verify the effectiveness of the proposed method, comparisons were performed from the
+perspectives of feature fusion and network architecture, including single- and partial-feature
+schemes as well as a variant without the SE module. The results are listed in Tables 3 and 4.
+Table 3 compares the performance under different feature schemes. Using only amplitude
+histogram features results in limited performance, with an MFR accuracy of 92.1%, an OSNR
+MAE of 0.552 dB, and an RMSE of 0.77 dB. Incorporating either entropy features or statistical
+features significantly improves the results, demonstrating the effectiveness of complementary
+information. When amplitude histogram, statistical, and entropy features are jointly integrated in
+===== PAGE 15 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14700
+Fig. 12. MFRaccuracyandOSNRmonitoringMAEininthelong-haulWDMtransmission
+system for (a) 4QAM (b) 8QAM (c) 16QAM (d) 32QAM (e) 64QAM.
+Table 2. RA under different channel counts.
+Channel Counts RA (4QAM ∼64QAM)
+1 100%
+3 100%
+5 100%
+7 100%
+9 100%
+Table 3. Comparison of MFR and OSNR monitoring performance under different feature schemes
+Feature Scheme MFR Accuracy (%) OSNR MAE (dB) OSNR RMSE (dB)
+AHs features 92.1 0.552 0.77
+AHs & entropy features 97.1 0.491 0.512
+AHs & statistical features 98.9 0.271 0.328
+The proposed method 99.2 0.169 0.233
+===== PAGE 16 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14701
+Table 4. Comparison of MFR and OSNR monitoring performance with and without the SE Module
+Method MFR Accuracy (%) OSNR MAE (dB) OSNR RMSE (dB)
+LA-MTL-DNN (without SE) 97.2 0.407 0.58
+The proposed method 99.2 0.169 0.233
+the proposed multi-feature fusion framework, the best performance is achieved, reaching 99.2%
+MFR accuracy, 0.169 dB MAE, and 0.233 dB RMSE. These results demonstrate the advantage
+of fully exploiting complementary feature characteristics for joint MFR and OSNR estimation.
+Table 4 evaluates the effect of the SE attention mechanism. Compared with the network
+withouttheSEmodule,namelyLA-MTL-DNN,theproposedmethodachievesclearperformance
+gains. The MFR accuracy improves from 97.2% to 99.2%, while the OSNR MAE and RMSE
+decrease from 0.407 dB and 0.58 dB to 0.169 dB and 0.233 dB, respectively. These results
+demonstratethattheproposedLA-MT-SEDNNenhancesfeaturerepresentationandconsequently
+improves both MFR and OSNR monitoring performance.
+Furthermore, a comparative analysis with representative methods was conducted. As sum-
+marized in Table 5, the proposed method achieves 100% recognition accuracy under lower
+OSNR conditions, larger residual CD, and fewer training epochs. Specifically, it maintains 100%
+accuracy over a fiber length range of 0–320 km, corresponding to a residual CD range of 0–5440
+ps/nm, whereas the accuracy in [22] decreases to 97.25% at 1600 ps/nm. The required OSNRs
+to achieve 100% recognition accuracy for 4QAM, 8QAM, 16QAM, and 64QAM are 5 dB, 8
+dB, 10 dB, and 16 dB, respectively, which are consistently lower than those reported in [24]. In
+addition, the proposed model converges to 100% accuracy within 60 epochs, while [26] requires
+111 epochs.
+In terms of OSNR monitoring, the proposed method also demonstrates superior accuracy. For
+64QAM signal, the average MAE is 0.284 dB, lower than the 0.439 dB reported in [24]. The
+overall average MAE of all modulation formats is as low as 0.169 dB, which is an improvement
+of 63.9% compared to 0.468 dB achieved in the scheme [26]. Similarly, the average RMSE for
+all modulation formats reached 0.233 dB, which represents an improvement of 69.3% and 65.7%
+compared to 0.76 dB in [22] and 0.68 dB in [23] respectively.
+These results clearly demonstrate that the proposed method exhibits superior robustness and
+higher accuracy in both MFR and OSNR monitoring, even under challenging transmission
+conditions.
+We further analyzed the computational complexity of the proposed method and compared it
+with other methods. For fairness, all neural-network-based baselines followed the architectural
+settings reported in their original publications. The time complexity was estimated based on the
+number of multiplications. Given an input feature dimension ofd, which is set to 45, the samples
+first pass through a shared fully connected layer withhneurons, which is set to 64, followed by
+batch normalization and an ELU activation function. Since the normalization and activation
+operations contribute only constant overhead, the dominant computational complexity of this
+stage is approximatelyd· h.
+Subsequently, the computational complexity of the SE block mainly arises from two linear
+transformations for dimensionality reduction and expansion. Thus, the total complexity of the
+SE blocks can be expressed as 2((2h2)/r + d), wherer is the channel compression ratio and is
+set to 2. The fully connected layers in the OSNR and MFR task specific branches contribute
+complexitiesof h· h1 + h1· C, whereh1 isthenumberofneuronsintherespectivelayerandisset
+to 32. C is the number of output classes, whereCMFR is set to 5 andCOSNR is set to 1. Therefore,
+the overall computational complexityWtotal of the proposed method can be formulated as
+Wtotal = d· h +2((2h2)/r + d) + h· h1 + h1· CMFR + h· h1 + h1· COSNR. (16)
+===== PAGE 17 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14702
+Table 5. Comparison of MFR and OSNR monitoring performance in different works
+Ref. Modulation Data rate Fiber OSNR RA OSNR Avg. OSNR
+Formats (Baud) length range (dB) (%) MAE (dB) RMSE (dB)
+[22]
+QPSK
+2.8/9.8 BTB
+10–22
+100
+-
+0.768QAM 14–24
+16QAM 17–26
+[23]
+QPSK
+12.5 5 km
+10–25
+100
+-
+0.68
+6QAM 10–25
+8QAM 10–25
+12QAM 10–25
+16QAM 15–30
+24QAM 20–35
+32QAM 20–35
+[24]
+QPSK
+28 BTB
+9–16
+100
+0.127 -
+8QAM 13–23 0.244
+16QAM 15–30 0.259
+64QAM 18–30 0.439
+[26]
+QPSK
+14/28 BTB
+8–30
+100 Avg. 0.468
+-
+16QAM 15–31
+32QAM 18–34
+The proposed
+method
+4QAM
+18 240 km
+5–8
+100
+0.127
+0.233
+8QAM 8–15 0.142
+16QAM 10–17 0.198
+32QAM 14–22 0.265
+64QAM 16–25 0.284
+Substituting the corresponding parameter valuesd = 45, h = 64, r = 2, h1 = 32, CMFR = 5
+and COSNR = 1, the resulting total multiplication-based time complexity is 15,450. Figure 11
+compares the time and space complexities of various joint MFR and OSNR monitoring methods.
+Intermsoftimecomplexity,theproposedmethodsignificantlyoutperformsotherneuralnetwork-
+based models. Specifically, the MTL-CNN model based on Radon image transformation exhibits
+a time complexity of 1,360,256 [26], while the MTL-DNN model with weight reduction and
+adaptive learning has a complexity of 322,762 [23]. Compared with these two methods, the
+proposed algorithm achieves reductions of 98.9% and 95.2%, respectively, demonstrating its
+computational superiority.
+Furthermore, as shown in Fig. 13, the proposed algorithm exhibits a space complexity of
+16,008, which is notably lower than that of other methods. These results indicate that the
+proposed method achieves an effective balance between computational efficiency and memory
+usage, making it a promising and practical solution for optical communication systems.
+Toprovideatransparentevaluationofcomputationalcomplexity,weconductaunifiedanalysis
+of floating-point operations (FLOPs), model parameters, and parameter memory consumption
+for all compared methods, as summarized in Table 5. The computational burden is quantified by
+FLOPs, which represent the forward inference complexity and are calculated as follows [30]
+FLOPs =
+L∑︂
+l=1
+((2× Inl−1)× Outl), (17)
+===== PAGE 18 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14703
+Fig. 13. The time and space complexities of various joint MFR and OSNR monitoring
+methods.
+where Inl and Outl represent the dimensionality of the input and output of the l-th layer,
+respectively. For multi-task architectures, the FLOPs of each branch are calculated separately
+and then summed to obtain the total complexity.
+The model scale is further characterized by the total number of trainable parameters (Params),
+which can be formulated as
+Params =
+L∑︂
+l=1
+(Inl× Outl + Outl). (18)
+The parameter memory consumption is then estimated according to the total number of
+parameters, assuming 32-bit floating-point representation.
+As summarized in Table 6, the proposed method achieves substantially lower computational
+complexity and model size while maintaining high monitoring accuracy. Specifically, the
+total FLOPs of the proposed method is 0.0223 M, which is significantly smaller than those
+of the compared methods and more than two orders of magnitude lower than the CNN-based
+approach reported in [26] with 11.018 M FLOPs. The total number of parameters is 0.01149 M,
+corresponding to approximately 0.0459 MB of memory, which is also markedly smaller than the
+baseline models. These results demonstrate that the proposed architecture effectively balances
+monitoring accuracy and computational efficiency, providing a lightweight solution for joint
+MFR and OSNR monitoring.
+5. Conclusion
+A multi-feature fusion method for joint MFR and OSNR monitoring using a lightweight adaptive
+attention network is proposed in the paper. Compact and informative features are extracted from
+CMA-equalized signals and processed by the proposed LA-MT-SEDNN with BO for accurate
+low-complexity estimation. Experiments in WDM systems demonstrate strong robustness across
+OSNR levels and channel counts. The method achieves 100% MFR accuracy with minimum
+OSNR requirements reduced by 4 dB, 5 dB, 5 dB, and 2 dB for 4QAM, 8QAM, 16QAM, and
+64QAM, respectively. OSNR monitoring achieves an MSE of 0.065 dB, an MAE of 0.169
+dB, and an RMSE of 0.233 dB. Compared with MTL-CNN and adaptive MTL-DNN, MAE
+and RMSE are reduced by 63.9% and 65.7%, while multiplication complexity is reduced by
+approximately 98.9% and 95.2%, demonstrating substantial performance gains with minimal
+computational cost.
+===== PAGE 19 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14704
+Table 6. FLOPs and parameters of various joint MFR and OSNR monitoring methods.
+Model Layer In Out Out Size
+FLOPs Parameters Param Memory
+(MB)Calculation (M) Calculation (M)
+[22]
+Shared Layer1 80 160 1 (2×80−1)× 160 0.02544 80×160 +160 0.01296 0.0518
+Shared Layer2 160 80 1 (2×160−1)× 80 0.02552 160×80 +80 0.01288 0.0515
+Shared Layer3 80 40 1 (2×80−1)× 40 0.00636 80×40 +40 0.00324 0.0130
+MFR Output 40 3 1 (2×40−1)× 3 0.000237 40×3 +3 0.000123 0.0005
+OSNR Output 40 1 1 (2×40−1)× 1 0.000079 40×1 +1 0.000041 0.0002
+Total - - - - 0.05764 - 0.02924 0.1170
+[23]
+Shared Layer 200 450 1 (2×200−1)× 450 0.17955 200×450 +450 0.09045 0.3618
+MFR Specific1 450 225 1 (2×450−1)× 225 0.20228 450×225 +225 0.10148 0.4059
+MFR Specific2 225 113 1 (2×225−1)× 113 0.05074 225×113 +113 0.02554 0.1022
+MFR Output 113 9 1 (2×113−1)× 9 0.00203 113×9 +9 0.00103 0.0041
+OSNR Specific1 450 225 1 (2×450−1)× 225 0.20228 450×225 +225 0.10148 0.4059
+OSNR Output 225 26 1 (2×225−1)× 26 0.01167 225×26 +26 0.00588 0.0235
+Total - - - - 0.64855 - 0.32586 1.3034
+[24]
+Hidden Layer1 180 120 1 (2×180−1)× 120 0.04308 180×120 +120 0.02172 0.0869
+Hidden Layer2 120 60 1 (2×120−1)× 60 0.01434 120×60 +60 0.00726 0.0290
+MFR Output 60 4 1 (2×60−1)× 4 0.000476 60×4 +4 0.000244 0.0010
+OSNR Output 60 1 1 (2×60−1)× 1 0.000119 60×1 +1 0.000061 0.0002
+Total - - - - 0.05802 - 0.02929 0.1171
+[26]
+Conv1 1×28×28 32 28×28 2×1×32×3×3×28×28 0.452 (3×3×1)× 32 +32 0.00032 0.0013
+Pool1 32 32 14×14 32×14×14 0.00627 - Negligible -
+Conv2 32 64 14×14 2×32×64×3×3×14×14 7.225 (3×3×32)× 64 +64 0.01850 0.0740
+Pool2 64 64 7×7 64×7×7 0.00314 - Negligible -
+Flatten 64×7×7 3136 1 - - - - -
+FC1 3136 512 1 (2×3136−1)× 512 3.211 3136×512 +512 1.606 6.424
+FC2 512 128 1 (2×512−1)× 128 0.131 512×128 +128 0.0657 0.2628
+MFR Output 128 5 1 (2×128−1)× 5 0.00128 128×5 +5 0.000645 0.0026
+OSNR Output 128 1 1 (2×128−1)× 1 0.000255 128×1 +1 0.000129 0.0005
+Total - - - - 11.018 - 1.691 6.764
+The proposed
+method
+Shared Layer 45 64 1 (2×45−1)× 64 0.00570 45×64 +64 0.00294 0.0118
+SE Block 64 64 1 (2×64−1)× 32 +(2×32−1)× 64 0.00809 64×32 +32 +32×64 +64 0.00419 0.0167
+MFR Specific 64 32 1 (2×64−1)× 32 0.00406 64×32 +32 0.00208 0.0083
+MFR Output 32 5 1 (2×32−1)× 5 0.000315 32×5 +5 0.000165 0.0007
+OSNR Specific 64 32 1 (2×64−1)× 32 0.00406 64×32 +32 0.00208 0.0083
+OSNR Output 32 1 1 (2×32−1)× 1 0.000063 32×1 +1 0.000033 0.0001
+Total - - - - 0.0223 - 0.01149 0.0459
+Funding. NationalNaturalScienceFoundationofChina(62325203);NationalKeyScientificInstrumentDevelopment
+Program (62227819, 61835002).
+Disclosures. The authors declare no conflicts of interest.
+Data availability. Data underlying the results presented in this paper are not publicly available at this time but may
+be obtained from the authors upon reasonable request.
+References
+1. F.Chai,Q.Zhang,H.Yao, et al.,“Ahybridnoma-omaframeworkformulti-useroffloadinginmobileedgecomputing
+system,” IEEE Transactions on Services Computing (2025).
+2. Z. Li, Y. Zhao, W. Wang,et al., “Resource-efficient protection scheme for optical service units in fifth-generation
+fixed networks,” J. Opt. Commun. Netw.15(7), 466–479 (2023).
+3. Y. Li, Q. Zhang, H. Yao,et al., “Optimizing cost-efficient sfc routing in ntns: a novel transformer-ant colony
+optimization framework,” IEEE Transactions on Vehicular Technology (2025).
+===== PAGE 20 =====
+Research Article Vol. 34, No. 8 / 20 Apr 2026 / Optics Express 14705
+4. Y. Wang, Q. Zhang, X. Xin,et al., “Security enhancement for noma-pon with 2d cellular automata and turing
+pattern cascading scramble aided fixed-point extended logistic chaotic encryption,” J. Opt. Commun. Netw.16(12),
+1204–1217 (2024).
+5. J. Xin, X. Li, L. Zhang,et al., “Priority-weight-based computing and spectrum resource scheduling for dependent
+tasks in eon-supported computing first networks,” J. Opt. Commun. Netw.16(7), 706–720 (2024).
+6. R. Jing, C. Zhang, H. Zhou,et al., “Innovation and demonstration of optical service unit-based metro-optimized otn
+technologies,” J. Opt. Commun. Netw.14(4), 236–247 (2022).
+7. H. Ma, J. Zhang, and Y. Ji, “Graph sequence attention network-enabled reinforcement learning for time-aware
+robust routing in osu-based otn,” inOptical Fiber Communication Conference, (Optica Publishing Group, 2022), pp.
+Th2A–18.
+8. W.Freude,R.Schmogrow,B.Nebendahl, et al.,“Qualitymetricsforopticalsignals: Eyediagram,q-factor,osnr,evm
+and ber,” in2012 14th International Conference on Transparent Optical Networks (ICTON), (IEEE, 2012), pp. 1–4.
+9. Q. Xu, R. Gao, F. Wang,et al., “Joint probabilistic shaping and pre-equalization for hollow-core fiber transmission
+using end-to-end learning,” Opt. Lett.50(5), 1679–1682 (2025).
+10. Z. Gong, F. Shi, X. Hu,et al., “Coherent optical transmitter iq imbalance mitigation with embedded carrier phase and
+frequency offset estimation,” Opt. Express32(4), 5500–5514 (2024).
+11. J. Feng, L. Jiang, L. Yan,et al., “Intelligent optical performance monitoring based on intensity and differential-phase
+features for digital coherent receivers,” J. Lightwave Technol.40(12), 3592–3601 (2022).
+12. Z. Huang, Q. Zhang, X. Xin,et al., “Modulation format identification based on signal constellation diagrams and
+support vector machine,” inPhotonics, vol. 9 (MDPI, 2022), p. 927.
+13. M. Hao, X. Jiang, X. Xiong,et al., “Low-complexity modulation format identification based on amplitude histogram
+distributions for digital coherent receivers,” inPhotonics, vol. 10 (MDPI, 2023), p. 472.
+14. X. Yuan, L. Jiang, L. Yan,et al., “The optoelectronic reservoir computing system based on parallel multi-time-delay
+feedback loops for time-series prediction and optical performance monitoring,” Chaos, Solitons & Fractals186,
+115306 (2024).
+15. M. Wang, J. Liu, J. Zhang,et al., “Modulation format identification based on phase statistics in stokes space,” Opt.
+Commun. 480, 126481 (2021).
+16. Y. Ma, M. Gao, L. Wang,et al., “Accuracy enhancement of moments-based osnr monitoring in qam coherent optical
+communication,” IEEE Commun. Lett.24(4), 821–824 (2020).
+17. M. S. Faruk, Y. Mori, and K. Kikuchi, “In-band estimation of optical signal-to-noise ratio from equalized signals in
+digital coherent receivers,” IEEE Photonics J.6(1), 1–9 (2014).
+18. T.Ji,Y.Peng,X.Xu, et al.,“In-bandosnrmonitoringforpdm-mqamsignalsusingdirectlydetectedstokesparameters,”
+Opt. Fiber Technol.61, 102425 (2021).
+19. X. Yu, C. Bai, L. Yang,et al., “Joint multi-parameter optical performance monitoring scheme based on trajectory
+information for a stokes vector direct detection system,” Appl. Opt.61(7), 1606–1615 (2022).
+20. L. Xu, Q. Wu, Z. Feng,et al., “Training symbol assisted in-band osnr monitoring technique suitable for long haul
+raman amplified pdm-co-ofdm system,” in 2017Opto-Electronics and Communications Conference (OECC) and
+Photonics Global Conference (PGC), (IEEE, 2017), pp. 1–3.
+21. X. Lin, O. A. Dobre, T. M. Ngatched,et al., “A non-data-aided osnr estimation algorithm for coherent optical fiber
+communication systems employing multilevel constellations,” J. Lightwave Technol.37(15), 3815–3825 (2019).
+22. Y. Cheng, S. Fu, M. Tang,et al., “Multi-task deep neural network (mt-dnn) enabled optical performance monitoring
+from directly detected pdm-qam signals,” Opt. Express27(13), 19062–19074 (2019).
+23. Z. Yu, Z. Wan, L. Shu,et al., “Loss weight adaptive multi-task learning based optical performance monitor for
+multiple parameters estimation,” Opt. Express27(25), 37041–37055 (2019).
+24. Z. Pu, L. Jiang, L. Yan,et al., “Joint modulation format identification and osnr monitoring based on stokes vector
+distribution features for digital coherent optical receivers,” Chin. Opt. Lett.22(5), 050602 (2024).
+25. H. Lv, X. Zhou, J. Huo,et al., “Joint osnr monitoring and modulation format identification on signal amplitude
+histograms using convolutional neural network,” Opt. Fiber Technol.61, 102455 (2021).
+26. T. Zhou, H. Xu, C. Bai,et al., “Simultaneous baud rate/modulation format identification and multi-parameter optical
+performance monitoring using multi-task learning with enhanced picture of radon transform,” Opt. Fiber Technol.70,
+102873 (2022).
+27. R. Caruna, “Multitask learning: A knowledge-based source of inductive bias,” inMachine learning: Proceedings of
+the tenth international conference, (1993), pp. 41–48.
+28. T. Jiang, Y. Xiang, L. Wang,et al., “Joint cd, dgd, and pdl estimation enabled by frft based time-frequency
+reconstruction,” J. Lightwave Technol.41(9), 2623–2630 (2023).
+29. Q. Zhao, X. Xin, Q. Zhang,et al., “Advanced decision scheme to mitigate phase impairments in coherent optical
+transmission systems,” Opt. Express32(25), 44854–44871 (2024).
+30. J. Xiang, Y. Cheng, S. Chen,et al., “Knowledge distillation technique enabled hardware efficient osnr monitoring
+from directly detected pdm-qam signals,” J. Opt. Commun. Netw.14(11), 916–923 (2022).

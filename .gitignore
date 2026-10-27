@@ -1,0 +1,27 @@
+# ---- 数据集与仿真产物（体积大，不入库）----
+dataset_gen/output/
+*.npy
+*.npz
+*.raw
+
+# ---- 训练产物 / 模型权重 ----
+model/results*/
+model/ab_*/
+model/_smoke*/
+
+# ---- 第三方数据集素材（radioML submodule 内容）----
+dataset-master/source_material/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# ---- 编辑器 / 工具 ----
+.workbuddy/
+.vscode/
+.idea/
+
+# ---- 论文与演示文件（大二进制 / 版权）----
+*.pdf
+*.pptx
