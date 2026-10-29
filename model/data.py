@@ -11,8 +11,7 @@
 # =====================================================================
 import numpy as np
 
-MODULATIONS = ["QAM8", "QAM16", "QAM32", "QAM64",
-               "BPSK", "QPSK", "8PSK"]
+MODULATIONS = ["QAM4_PCS", "QAM16_PCS", "QAM64_PCS", "QAM256_PCS"]
 
 
 class FeatureData(object):
@@ -20,7 +19,7 @@ class FeatureData(object):
 
     def __init__(self, X, y_mod, y_osnr, train_idx, val_idx, test_idx,
                  mod_names, feature_names, meta=None):
-        self.X = X                      # (N, 47) float32 原始特征
+        self.X = X                      # (N, 45) float32 原始特征
         self.y_mod = y_mod              # (N,) int64  调制类别
         self.y_osnr = y_osnr            # (N,) float32 OSNR(dB)
         self.train_idx = train_idx
@@ -72,16 +71,12 @@ def feature_subset(X, feature_names, scheme):
         "ah+ent"  : AH + 2 个熵
         "ah+stat" : AH + 3 个统计量
         "ent+stat": 去掉 AH, 仅 3 统计量 + 2 熵 = 5 维
-        "cum"     : 仅 2 维四阶累积量 |C40| / C42
-        "all45"   : AH + 统计量 + 熵 = 45 维(去掉累积量, 用于 A/B 对照)
-        "all"     : 47 维全特征(论文方法 + 累积量)
+        "all"     : 45 维全特征(AH + 统计量 + 熵)
     """
     idx_ah = [i for i, n in enumerate(feature_names) if n.startswith("ah_")]
     idx_ent = [i for i, n in enumerate(feature_names) if n in ("h_log", "h_norm")]
     idx_stat = [i for i, n in enumerate(feature_names)
                 if n in ("dms", "sigma_spread", "sigma_vel")]
-    idx_cum = [i for i, n in enumerate(feature_names)
-               if n in ("c40_abs", "c42")]
     if scheme == "ah":
         sel = idx_ah
     elif scheme == "ah+ent":
@@ -90,12 +85,8 @@ def feature_subset(X, feature_names, scheme):
         sel = idx_ah + idx_stat
     elif scheme == "ent+stat":
         sel = idx_stat + idx_ent
-    elif scheme == "cum":
-        sel = idx_cum
-    elif scheme == "all45":
-        sel = idx_ah + idx_stat + idx_ent
     elif scheme == "all":
-        sel = idx_ah + idx_stat + idx_ent + idx_cum
+        sel = idx_ah + idx_stat + idx_ent
     else:
         raise ValueError("未知特征方案: %s" % scheme)
     return X[:, sel], sel

@@ -77,8 +77,7 @@ def main():
         ah_bins=F.N_BINS, ah_range=(0.0, C.AH_RANGE_MAX),
         entropy="energy (paper Eq.6)",
         power_norm=C.FEAT_POWER_NORM,
-        vel_from_amplitude=C.VEL_FROM_AMPLITUDE, vel_abs=C.VEL_ABS,
-        cumulants=["|C40|", "C42"])
+        vel_from_amplitude=C.VEL_FROM_AMPLITUDE, vel_abs=C.VEL_ABS)
     meta["rebuilt_from"] = os.path.basename(raw_path)
 
     out = npz_path.replace("_features.npz",

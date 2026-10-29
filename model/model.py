@@ -3,11 +3,11 @@
 # model.py —— LA-MT-SEDNN（轻量级自适应多任务 SE 深度神经网络）
 #
 # 结构严格对照论文 2.2 节 / Fig.5:
-#   输入 47 维归一化特征
+#   输入 45 维归一化特征
 #     -> 共享层: 64 全连接神经元 + BatchNorm + ELU
 #     -> SE 注意力模块: 压缩 FC(64->32)+ReLU, 扩张 FC(32->64)+Sigmoid,
 #        h_SE = s ⊙ h（压缩比 r = 2, 对应论文式(9)~(12)）
-#     -> MFR 分支: 32 神经元 + BN + ELU + Dropout -> 7 输出(softmax)
+#     -> MFR 分支: 32 神经元 + BN + ELU + Dropout -> 4 输出(softmax)
 #        OSNR 分支: 32 神经元 + BN + ELU（无 dropout）-> 1 输出(回归)
 #
 # 损失: L = λ1·CCE + λ2·MSE, 论文取 λ1 = 0.8, λ2 = 1.5
@@ -35,7 +35,7 @@ class SEModule(nn.Module):
 
 
 class LA_MT_SEDNN(nn.Module):
-    def __init__(self, in_dim=47, h=64, h1=32, r=2, n_class=7, dropout=0.2,
+    def __init__(self, in_dim=45, h=64, h1=32, r=2, n_class=4, dropout=0.2,
                  use_se=True):
         super(LA_MT_SEDNN, self).__init__()
         self.use_se = use_se
@@ -73,7 +73,7 @@ def multitask_loss(logits, osnr_pred, y_mod, y_osnr, lam1=0.8, lam2=1.5):
     return lam1 * cce + lam2 * mse, float(cce.detach()), float(mse.detach())
 
 
-def complexity_mults(d=47, h=64, h1=32, r=2, c_mfr=8, c_osnr=1, use_se=True):
+def complexity_mults(d=45, h=64, h1=32, r=2, c_mfr=4, c_osnr=1, use_se=True):
     """论文式(16): 前向传播乘法次数(仅统计线性层)。
     use_se=False 时不计 SE 的两次线性变换。"""
     se = 2 * (2 * h * h / r + d) if use_se else 0.0
@@ -85,7 +85,7 @@ def complexity_mults(d=47, h=64, h1=32, r=2, c_mfr=8, c_osnr=1, use_se=True):
 
 if __name__ == "__main__":
     net = LA_MT_SEDNN()
-    x = torch.randn(4, 47)
+    x = torch.randn(4, 45)
     lg, os_ = net(x)
     print("logits", tuple(lg.shape), " osnr", tuple(os_.shape))
     print("参数量:", sum(p.numel() for p in net.parameters()))

@@ -21,10 +21,10 @@
 #   -> RRC 匹配滤波(Coherent Rx) -> [I/Q 失衡补偿] -> [色散补偿(有光纤时)]
 #   -> [定时恢复(Gardner)] -> 2x2 MIMO CMA
 #   -> 丢弃前置收敛符号 -> X 偏振 16384 符号
-#   -> 47 维特征(存矩阵) + 原始均衡符号(存 memmap .npy, 每行一样本)
+#   -> 45 维特征(存矩阵) + 原始均衡符号(存 memmap .npy, 每行一样本)
 #
 # 输出文件(out-dir 下):
-#   <preset>_cma_features.npz : X(N,47) 原始特征 / X_norm / z-score 统计 /
+#   <preset>_cma_features.npz : X(N,45) 原始特征 / X_norm / z-score 统计 /
 #                           标签(调制/OSNR/长度/DGD/线宽/功率) /
 #                           70-20-10 划分索引 / meta(JSON)
 #   <preset>_cma_raw.npy      : (N, n_symbols) complex64 原始均衡符号(memmap)
@@ -229,8 +229,7 @@ def main():
         feature_cfg=dict(ah_bins=F.N_BINS, ah_range=(0.0, C.AH_RANGE_MAX),
                          entropy="energy (paper Eq.6)",
                          vel_from_amplitude=C.VEL_FROM_AMPLITUDE,
-                         vel_abs=C.VEL_ABS,
-                         cumulants=["|C40|", "C42"]),
+                         vel_abs=C.VEL_ABS),
         channel_order=["linewidth", "ssfm_fiber", "dgd", "ase"],
         impairments=C.IMPAIR,
         rx_chain=["matched_filter", "iq_comp_gs", "cd_comp",

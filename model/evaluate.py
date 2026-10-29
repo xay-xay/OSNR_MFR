@@ -6,7 +6,7 @@
 #   Fig.6  BTB 链路上各格式的 OSNR 监测 MAE 随 OSNR 变化(evaluate 默认)
 #   Fig.7  MFR 精度 RA 与 OSNR MAE 随 epoch 变化(BO 自适应 vs 固定学习率)
 #   混淆矩阵 / 预测散点
-#   Table 3 特征方案消融(AHs / AHs+熵 / AHs+统计 / 累积量 / 全 47 维)  --ablation
+#   Table 3 特征方案消融(AHs / AHs+熵 / AHs+统计 / 全 45 维)  --ablation
 #   Table 6 计算复杂度(论文式(16))                     --complexity
 #
 # 用法:
@@ -24,8 +24,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from data import load_dataset, feature_subset
 from model import LA_MT_SEDNN, complexity_mults
 
-MODS = ["QAM8", "QAM16", "QAM32", "QAM64",
-        "BPSK", "QPSK", "8PSK"]
+MODS = ["QAM4_PCS", "QAM16_PCS", "QAM64_PCS", "QAM256_PCS"]
 
 
 def _json_default(o):
@@ -213,9 +212,7 @@ def main():
                        ("ah+ent", "AHs & entropy"),
                        ("ah+stat", "AHs & statistical"),
                        ("ent+stat", "Entropy & statistical"),
-                       ("cum", "|C40| & C42 only"),
-                       ("all45", "All 45 (w/o cumulants)"),
-                       ("all", "Proposed (all 47)")]
+                       ("all", "Proposed (all 45)")]
         if args.ablation_schemes:
             keep = [s.strip() for s in args.ablation_schemes.split(",")]
             scheme_list = [(s, lb) for s, lb in scheme_list if s in keep]

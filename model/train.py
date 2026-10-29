@@ -10,6 +10,7 @@
 #       学习率     log-uniform(5e-4, 1e-2)
 #       dropout    uniform(0.1, 0.4)  (仅作用于 MFR 分支)
 #   * 另跑固定学习率 {5e-4, 1e-3, 1e-2, 5e-2} 作为论文 Fig.7 的对照
+#   * 训练设备自动选择: 有 CUDA 则用 GPU(--device 可强制 cpu/cuda)
 #
 # 用法:
 #   python train.py --npz ../dataset_gen/output/btb/btb_cma_features.npz
@@ -34,11 +35,33 @@ from model import LA_MT_SEDNN, multitask_loss
 torch.set_num_threads(max(1, os.cpu_count() - 1))
 
 
+def pick_device(name="auto"):
+    """设备选择: auto(有 CUDA 用 GPU) / cuda / cpu。"""
+    if name == "cpu":
+        return torch.device("cpu")
+    if name == "cuda":
+        if not torch.cuda.is_available():
+            raise SystemExit("--device cuda 但 CUDA 不可用")
+        return torch.device("cuda")
+    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+# 训练设备(模块级, evaluate.py 复用 train_once 时同样生效)
+DEVICE = pick_device("auto")
+
+
 def make_loader(X, ym, yo, batch_size, shuffle, seed=0):
-    ds = TensorDataset(torch.from_numpy(X), torch.from_numpy(ym),
-                       torch.from_numpy(yo))
+    """X/ym/yo 为已在 DEVICE 上的张量(见 train_once), DataLoader 仅切片。"""
+    ds = TensorDataset(X, ym, yo)
     g = torch.Generator().manual_seed(seed)
     return DataLoader(ds, batch_size=batch_size, shuffle=shuffle, generator=g)
+
+
+def _to_device(X, ym, yo):
+    """numpy 数组 -> DEVICE 上的张量(整块搬运一次, 免去逐 batch 传输)。"""
+    return (torch.from_numpy(np.ascontiguousarray(X)).to(DEVICE),
+            torch.from_numpy(np.ascontiguousarray(ym)).to(DEVICE),
+            torch.from_numpy(np.ascontiguousarray(yo)).to(DEVICE))
 
 
 @torch.no_grad()
@@ -66,15 +89,18 @@ def train_once(Xtr, ymtr, yotr, Xva, ymva, yova, lr, dropout,
                epochs=300, patience=200, batch_size=128, seed=0,
                verbose=False, Xte=None, ymte=None, yote=None, use_se=True,
                n_class=7):
-    """训练一次, 返回 (最优权重, 训练历史, 最优验证 MAE)。"""
+    """训练一次, 返回 (最优权重, 训练历史, 最优验证 MAE)。
+    数据一次性搬到 DEVICE, 训练全程在 GPU(若可用)上进行。"""
     torch.manual_seed(seed)
+    if DEVICE.type == "cuda":
+        torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
     net = LA_MT_SEDNN(in_dim=Xtr.shape[1], n_class=n_class,
-                      dropout=dropout, use_se=use_se)
+                      dropout=dropout, use_se=use_se).to(DEVICE)
     opt = torch.optim.Adam(net.parameters(), lr=lr)
-    tr = make_loader(Xtr, ymtr, yotr, batch_size, True, seed)
-    va = make_loader(Xva, ymva, yova, 512, False)
-    te = (make_loader(Xte, ymte, yote, 512, False)
+    tr = make_loader(*_to_device(Xtr, ymtr, yotr), batch_size, True, seed)
+    va = make_loader(*_to_device(Xva, ymva, yova), 512, False)
+    te = (make_loader(*_to_device(Xte, ymte, yote), 512, False)
           if Xte is not None else None)
 
     best = dict(mae=1e9, epoch=-1, state=None)
@@ -130,13 +156,20 @@ def main():
     ap.add_argument("--no-fixed-lr", action="store_true",
                     help="跳过固定学习率对照(论文 Fig.7)")
     ap.add_argument("--scheme", default="all",
-                    choices=["all", "ah", "ah+ent", "ah+stat",
-                             "ent+stat", "cum", "all45"],
-                    help="特征方案: all=47维 / all45=45维(去累积量) / ah=40维 / "
-                         "ent+stat=5维(去AH) / cum=2维累积量")
+                    choices=["all", "ah", "ah+ent", "ah+stat", "ent+stat"],
+                    help="特征方案: all=45维全特征 / ah=40维 / "
+                         "ent+stat=5维(去AH)")
     ap.add_argument("--no-se", action="store_true",
                     help="去掉 SE 注意力模块(消融对照)")
+    ap.add_argument("--device", default="auto", choices=["auto", "cuda", "cpu"],
+                    help="训练设备: auto=有 CUDA 用 GPU(默认)")
     args = ap.parse_args()
+
+    global DEVICE
+    DEVICE = pick_device(args.device)
+    dev_name = (torch.cuda.get_device_name(0)
+                if DEVICE.type == "cuda" else "CPU")
+    print("训练设备: %s (%s)" % (DEVICE, dev_name))
 
     os.makedirs(args.out_dir, exist_ok=True)
     d = load_dataset(args.npz)
@@ -199,7 +232,8 @@ def main():
         epochs=args.epochs, patience=args.patience,
         batch_size=args.batch_size, seed=args.seed, verbose=True,
         Xte=Xte, ymte=ymte, yote=yote, use_se=use_se, n_class=n_class)
-    torch.save(dict(state_dict=state, lr=best_lr, dropout=best_dr,
+    state_cpu = {k: v.detach().cpu() for k, v in state.items()}
+    torch.save(dict(state_dict=state_cpu, lr=best_lr, dropout=best_dr,
                     in_dim=Xtr.shape[1], n_class=n_class,
                     norm_mean=mu, norm_std=sd,
                     use_se=use_se, scheme=args.scheme),
