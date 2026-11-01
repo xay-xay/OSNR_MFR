@@ -103,7 +103,9 @@ def main():
     ap.add_argument("--cma-extra", type=int, default=C.CMA_EXTRA,
                     help="CMA 前置收敛符号数(丢弃)")
     ap.add_argument("--cma-taps", type=int, default=C.CMA_N_TAPS)
-    ap.add_argument("--cma-mu", type=float, default=C.CMA_MU)
+    ap.add_argument("--cma-mu", type=float, default=5e-3,
+                    help="CMA 归一化步长(整形星座收敛慢, 默认 5e-3; "
+                         "均匀格式口径 1e-3 见 config.CMA_MU)")
     ap.add_argument("--osnr-mode", default=C.OSNR_MODE,
                     choices=["0.1nm", "inband"], help="OSNR 定标口径")
     ap.add_argument("--seed", type=int, default=C.BASE_SEED)
